@@ -1,0 +1,650 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>75 Day Tracker</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #17202a;
+        --muted: #667085;
+        --line: #d9dee7;
+        --panel: #ffffff;
+        --paper: #f6f7f2;
+        --accent: #257a6b;
+        --accent-strong: #0f5f54;
+        --accent-soft: #d9f0ec;
+        --warn: #c66a20;
+        --done: #254e7b;
+        --done-soft: #dbeafe;
+        --shadow: 0 18px 50px rgba(30, 41, 59, 0.12);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+          linear-gradient(120deg, rgba(37, 122, 107, 0.12), transparent 32%),
+          linear-gradient(280deg, rgba(198, 106, 32, 0.12), transparent 36%),
+          var(--paper);
+        color: var(--ink);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+      }
+
+      button,
+      input,
+      textarea {
+        font: inherit;
+      }
+
+      button {
+        border: 1px solid var(--line);
+        background: var(--panel);
+        color: var(--ink);
+        border-radius: 8px;
+        cursor: pointer;
+        min-height: 42px;
+        padding: 0 14px;
+      }
+
+      button:hover {
+        border-color: var(--accent);
+      }
+
+      button.primary {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #ffffff;
+      }
+
+      button.primary:hover {
+        background: var(--accent-strong);
+      }
+
+      .app {
+        width: min(1180px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 28px 0;
+      }
+
+      header {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: end;
+        gap: 18px;
+        margin-bottom: 20px;
+      }
+
+      h1 {
+        margin: 0 0 8px;
+        font-size: clamp(2rem, 5vw, 4.4rem);
+        line-height: 0.95;
+        letter-spacing: 0;
+      }
+
+      .subtitle {
+        margin: 0;
+        color: var(--muted);
+        max-width: 58ch;
+        line-height: 1.5;
+      }
+
+      .status-pill {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        min-width: 178px;
+        min-height: 44px;
+        padding: 0 14px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.72);
+        color: var(--muted);
+        white-space: nowrap;
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: 330px minmax(0, 1fr);
+        gap: 18px;
+        align-items: start;
+      }
+
+      .panel {
+        background: rgba(255, 255, 255, 0.86);
+        border: 1px solid rgba(217, 222, 231, 0.9);
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+      }
+
+      .summary {
+        padding: 20px;
+        position: sticky;
+        top: 18px;
+      }
+
+      .progress-wrap {
+        display: grid;
+        place-items: center;
+        margin: 4px 0 18px;
+      }
+
+      .progress-ring {
+        --pct: 0;
+        width: 202px;
+        aspect-ratio: 1;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background:
+          radial-gradient(circle at center, var(--panel) 0 58%, transparent 59%),
+          conic-gradient(var(--accent) calc(var(--pct) * 1%), #e7ebf0 0);
+        box-shadow: inset 0 0 0 1px rgba(23, 32, 42, 0.04);
+      }
+
+      .progress-ring strong {
+        display: block;
+        font-size: 3.1rem;
+        line-height: 1;
+      }
+
+      .progress-ring span {
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+
+      .metrics {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin-bottom: 18px;
+      }
+
+      .metric {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 10px;
+        background: #fbfcfd;
+      }
+
+      .metric span {
+        display: block;
+        color: var(--muted);
+        font-size: 0.78rem;
+      }
+
+      .metric strong {
+        display: block;
+        margin-top: 4px;
+        font-size: 1.4rem;
+      }
+
+      .controls {
+        display: grid;
+        gap: 12px;
+      }
+
+      label {
+        display: grid;
+        gap: 6px;
+        color: var(--muted);
+        font-size: 0.86rem;
+      }
+
+      input[type="date"],
+      textarea {
+        width: 100%;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        color: var(--ink);
+        padding: 10px 12px;
+      }
+
+      textarea {
+        min-height: 112px;
+        resize: vertical;
+        line-height: 1.45;
+      }
+
+      .button-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+
+      .calendar {
+        padding: 18px;
+      }
+
+      .calendar-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 14px;
+      }
+
+      h2 {
+        margin: 0;
+        font-size: 1.05rem;
+      }
+
+      .legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        color: var(--muted);
+        font-size: 0.86rem;
+      }
+
+      .legend span {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #e7ebf0;
+        border: 1px solid var(--line);
+      }
+
+      .dot.done {
+        background: var(--done);
+        border-color: var(--done);
+      }
+
+      .dot.today {
+        background: var(--warn);
+        border-color: var(--warn);
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(15, minmax(42px, 1fr));
+        gap: 8px;
+      }
+
+      .day {
+        position: relative;
+        display: grid;
+        grid-template-rows: 18px 1fr auto;
+        gap: 4px;
+        min-height: 72px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fbfcfd;
+        padding: 8px;
+        text-align: center;
+        transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
+      }
+
+      .day:hover {
+        transform: translateY(-1px);
+      }
+
+      .day.done {
+        background: var(--done-soft);
+        border-color: #8db7e7;
+      }
+
+      .day.today {
+        border-color: var(--warn);
+        box-shadow: inset 0 0 0 1px var(--warn);
+      }
+
+      .day-number {
+        align-self: center;
+        font-weight: 750;
+        font-size: 1.18rem;
+        line-height: 1;
+      }
+
+      .day-date {
+        color: var(--muted);
+        font-size: 0.72rem;
+        overflow-wrap: anywhere;
+      }
+
+      .check {
+        position: relative;
+        justify-self: end;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        border: 1px solid var(--line);
+        background: var(--panel);
+      }
+
+      .day.done .check {
+        background: var(--done);
+        border-color: var(--done);
+      }
+
+      .day.done .check::after {
+        content: "";
+        position: absolute;
+        left: 5px;
+        top: 2px;
+        width: 5px;
+        height: 10px;
+        border: solid #ffffff;
+        border-width: 0 2px 2px 0;
+        transform: rotate(45deg);
+      }
+
+      .empty-state {
+        display: none;
+        border: 1px dashed var(--line);
+        border-radius: 8px;
+        padding: 18px;
+        color: var(--muted);
+        background: rgba(255, 255, 255, 0.55);
+      }
+
+      @media (max-width: 940px) {
+        header,
+        .layout {
+          grid-template-columns: 1fr;
+        }
+
+        .summary {
+          position: static;
+        }
+
+        .grid {
+          grid-template-columns: repeat(10, minmax(42px, 1fr));
+        }
+      }
+
+      @media (max-width: 620px) {
+        .app {
+          width: min(100% - 20px, 1180px);
+          padding: 16px 0;
+        }
+
+        .calendar,
+        .summary {
+          padding: 14px;
+        }
+
+        .calendar-head {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .grid {
+          grid-template-columns: repeat(5, minmax(48px, 1fr));
+          gap: 7px;
+        }
+
+        .day {
+          min-height: 68px;
+          padding: 7px;
+        }
+
+        .status-pill {
+          min-width: 0;
+          width: 100%;
+          justify-content: flex-start;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app">
+      <header>
+        <div>
+          <h1>75 Day Tracker</h1>
+          <p class="subtitle">
+            Count each day, mark it complete, and keep a simple running note for the full 75-day stretch.
+          </p>
+        </div>
+        <div class="status-pill" id="dateRange">Set your start date</div>
+      </header>
+
+      <section class="layout">
+        <aside class="panel summary" aria-label="Tracker summary">
+          <div class="progress-wrap">
+            <div class="progress-ring" id="progressRing" aria-label="Progress">
+              <div>
+                <strong id="percentComplete">0%</strong>
+                <span id="completedLabel">0 of 75 complete</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="metrics">
+            <div class="metric">
+              <span>Done</span>
+              <strong id="doneCount">0</strong>
+            </div>
+            <div class="metric">
+              <span>Left</span>
+              <strong id="leftCount">75</strong>
+            </div>
+            <div class="metric">
+              <span>Today</span>
+              <strong id="currentDay">-</strong>
+            </div>
+          </div>
+
+          <div class="controls">
+            <label>
+              Start date
+              <input type="date" id="startDate">
+            </label>
+            <div class="button-row">
+              <button class="primary" type="button" id="markNext">Mark next</button>
+              <button type="button" id="clearAll">Clear all</button>
+            </div>
+            <label>
+              Notes
+              <textarea id="notes" placeholder="Add goals, rules, or reflections."></textarea>
+            </label>
+          </div>
+        </aside>
+
+        <section class="panel calendar" aria-label="75 day calendar">
+          <div class="calendar-head">
+            <h2>Day Count</h2>
+            <div class="legend" aria-label="Legend">
+              <span><i class="dot done"></i>Complete</span>
+              <span><i class="dot today"></i>Today</span>
+              <span><i class="dot"></i>Open</span>
+            </div>
+          </div>
+          <div class="grid" id="dayGrid"></div>
+          <div class="empty-state" id="emptyState">Choose a start date to see calendar dates for each day.</div>
+        </section>
+      </section>
+    </main>
+
+    <script>
+      const TOTAL_DAYS = 75;
+      const STORAGE_KEY = "day-count-tracker-75";
+      const grid = document.querySelector("#dayGrid");
+      const startDateInput = document.querySelector("#startDate");
+      const notesInput = document.querySelector("#notes");
+      const progressRing = document.querySelector("#progressRing");
+      const percentComplete = document.querySelector("#percentComplete");
+      const completedLabel = document.querySelector("#completedLabel");
+      const doneCount = document.querySelector("#doneCount");
+      const leftCount = document.querySelector("#leftCount");
+      const currentDay = document.querySelector("#currentDay");
+      const dateRange = document.querySelector("#dateRange");
+      const emptyState = document.querySelector("#emptyState");
+      const markNext = document.querySelector("#markNext");
+      const clearAll = document.querySelector("#clearAll");
+
+      const dateFormatter = new Intl.DateTimeFormat(undefined, {
+        month: "short",
+        day: "numeric"
+      });
+
+      const storage = {
+        completed: [],
+        startDate: toInputDate(new Date()),
+        notes: ""
+      };
+
+      loadState();
+      render();
+
+      startDateInput.addEventListener("change", () => {
+        storage.startDate = startDateInput.value;
+        saveState();
+        render();
+      });
+
+      notesInput.addEventListener("input", () => {
+        storage.notes = notesInput.value;
+        saveState();
+      });
+
+      markNext.addEventListener("click", () => {
+        for (let day = 1; day <= TOTAL_DAYS; day += 1) {
+          if (!storage.completed.includes(day)) {
+            storage.completed.push(day);
+            break;
+          }
+        }
+
+        saveState();
+        render();
+      });
+
+      clearAll.addEventListener("click", () => {
+        storage.completed = [];
+        saveState();
+        render();
+      });
+
+      function render() {
+        startDateInput.value = storage.startDate;
+        notesInput.value = storage.notes;
+        renderDays();
+        renderSummary();
+      }
+
+      function renderDays() {
+        grid.innerHTML = "";
+        const startDate = parseInputDate(storage.startDate);
+        emptyState.style.display = startDate ? "none" : "block";
+
+        for (let day = 1; day <= TOTAL_DAYS; day += 1) {
+          const button = document.createElement("button");
+          const isDone = storage.completed.includes(day);
+          const date = startDate ? addDays(startDate, day - 1) : null;
+          const isToday = date ? sameDay(date, new Date()) : false;
+
+          button.type = "button";
+          button.className = ["day", isDone ? "done" : "", isToday ? "today" : ""]
+            .filter(Boolean)
+            .join(" ");
+          button.setAttribute("aria-pressed", String(isDone));
+          button.setAttribute("aria-label", `Day ${day}${isDone ? ", complete" : ""}`);
+          button.innerHTML = `
+            <span class="check" aria-hidden="true"></span>
+            <span class="day-number">${day}</span>
+            <span class="day-date">${date ? dateFormatter.format(date) : ""}</span>
+          `;
+
+          button.addEventListener("click", () => toggleDay(day));
+          grid.appendChild(button);
+        }
+      }
+
+      function renderSummary() {
+        const completed = storage.completed.length;
+        const percent = Math.round((completed / TOTAL_DAYS) * 100);
+        const startDate = parseInputDate(storage.startDate);
+        const endDate = startDate ? addDays(startDate, TOTAL_DAYS - 1) : null;
+        const todayNumber = startDate ? dayNumberForDate(startDate, new Date()) : null;
+
+        progressRing.style.setProperty("--pct", percent);
+        percentComplete.textContent = `${percent}%`;
+        completedLabel.textContent = `${completed} of ${TOTAL_DAYS} complete`;
+        doneCount.textContent = completed;
+        leftCount.textContent = TOTAL_DAYS - completed;
+        currentDay.textContent = todayNumber && todayNumber >= 1 && todayNumber <= TOTAL_DAYS
+          ? todayNumber
+          : "-";
+        dateRange.textContent = startDate && endDate
+          ? `${dateFormatter.format(startDate)} - ${dateFormatter.format(endDate)}`
+          : "Set your start date";
+      }
+
+      function toggleDay(day) {
+        if (storage.completed.includes(day)) {
+          storage.completed = storage.completed.filter((value) => value !== day);
+        } else {
+          storage.completed.push(day);
+        }
+
+        storage.completed.sort((a, b) => a - b);
+        saveState();
+        render();
+      }
+
+      function loadState() {
+        try {
+          const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+          if (saved && Array.isArray(saved.completed)) {
+            storage.completed = saved.completed.filter((day) => day >= 1 && day <= TOTAL_DAYS);
+            storage.startDate = saved.startDate || storage.startDate;
+            storage.notes = saved.notes || "";
+          }
+        } catch {
+          saveState();
+        }
+      }
+
+      function saveState() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(storage));
+      }
+
+      function parseInputDate(value) {
+        if (!value) return null;
+        const [year, month, day] = value.split("-").map(Number);
+        return new Date(year, month - 1, day);
+      }
+
+      function toInputDate(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
+      }
+
+      function addDays(date, amount) {
+        const next = new Date(date);
+        next.setDate(next.getDate() + amount);
+        return next;
+      }
+
+      function sameDay(left, right) {
+        return left.getFullYear() === right.getFullYear()
+          && left.getMonth() === right.getMonth()
+          && left.getDate() === right.getDate();
+      }
+
+      function dayNumberForDate(startDate, date) {
+        const start = Date.UTC(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+        const target = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+        return Math.floor((target - start) / 86400000) + 1;
+      }
+    </script>
+  </body>
+</html>
